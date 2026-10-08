@@ -1,6 +1,7 @@
 node_modules/
 .next/
 .netlify/
+.vercel/
 .env*
 !.env.example
 *.tsbuildinfo
