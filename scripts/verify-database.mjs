@@ -25,9 +25,17 @@ registerHooks({
   }
 });
 const pg = new PGlite();
-await pg.exec(readFileSync(path.join(root,'netlify/database/migrations/20261008150000_knowledge.sql'),'utf8'));
 const {Database,postgresQuery}=await import('../db/adapter.ts');
-const query=async(sql,params)=>{const r=await pg.query(sql,params);return {...r,rowCount:r.affectedRows};};
+const query=async(sql,params)=>{
+  if (sql === 'SELECT pg_advisory_xact_lock(20261008, 150122)') return {rows:[],rowCount:1};
+  const r=params ? await pg.query(sql,params) : (await pg.exec(sql)).at(-1);
+  return {...r,rowCount:r.affectedRows};
+};
+const {migrateDatabase}=await import('./database.mjs');
+const testPool={query,connect:async()=>({query,release(){}})};
+await migrateDatabase(testPool);
+await migrateDatabase(testPool);
+assert.equal((await query('SELECT count(*) FROM kb_schema_migrations')).rows[0].count,1);
 globalThis.__testDb=new Database({query,connect:async()=>({query,release(){}})});
 process.env.KB_SESSION_SECRET='isolated-test-session';
 process.env.KB_EDITOR_CODE_HASH=createHash('sha256').update('test-team-code').digest('hex');
@@ -35,10 +43,21 @@ const api=await import('../app/api/knowledge/route.ts');
 const team=await import('../app/api/team/route.ts');
 const create=await import('../app/api/questions/route.ts');
 const detail=await import('../app/api/questions/[id]/route.ts');
+const health=await import('../app/api/health/route.ts');
 const origin='https://example.netlify.app';
 function request(route,method='GET',body,headers={}){return new Request(origin+route,{method,headers:{origin,'content-type':'application/json',...headers},body:body===undefined?undefined:JSON.stringify(body)});}
 let checks=0;
 function check(actual,expected){assert.deepEqual(actual,expected);checks++;}
+check((await health.GET()).status,200);
+delete process.env.KB_SESSION_SECRET;
+check((await health.GET()).status,503);
+process.env.KB_SESSION_SECRET='isolated-test-session';
+process.env.KB_PUBLIC_ORIGIN=origin;
+const proxyRequest=new Request('http://internal-server/api/team',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({code:'test-team-code'})});
+const proxyLogin=await team.POST(proxyRequest);
+check(proxyLogin.status,200);
+assert(proxyLogin.headers.get('set-cookie').includes('; Secure'));checks++;
+delete process.env.KB_PUBLIC_ORIGIN;
 check(postgresQuery("SELECT '?' AS literal WHERE id=?"),"SELECT '?' AS literal WHERE id=$1");
 const publicList=await (await api.GET(request('/api/knowledge'))).json();
 check(publicList.canEdit,false);assert(publicList.articles.length>30);checks++;
@@ -68,6 +87,9 @@ check((await create.POST(request('/api/questions','POST',{...submission,id:crypt
 check((await create.POST(request('/api/questions','POST',{...submission,id:crypto.randomUUID()},{origin:'https://other.example'}))).status,403);
 for(let i=0;i<9;i++)check((await create.POST(request('/api/questions','POST',{...submission,id:crypto.randomUUID()}))).status,201);
 check((await create.POST(request('/api/questions','POST',{...submission,id:crypto.randomUUID()}))).status,429);
+process.env.KB_CLIENT_IP_HEADER='x-forwarded-for';
+check((await create.POST(request('/api/questions','POST',{...submission,id:crypto.randomUUID()},{'x-forwarded-for':'203.0.113.1, 198.51.100.1'}))).status,201);
+check((await create.POST(request('/api/questions','POST',{...submission,id:crypto.randomUUID()},{'x-forwarded-for':'203.0.113.2, 198.51.100.2'}))).status,201);
 const logout=await team.DELETE(request('/api/team','DELETE',undefined,{cookie}));check(logout.status,200);
 await pg.close();
-console.log(checks+' checks passed: public questions, access control, replies, clarifications, PostgreSQL transactions and rate limits.');
+console.log(checks+' checks passed: migrations, health, proxy origin, public questions, access control, replies, clarifications and rate limits.');

@@ -21,7 +21,9 @@ export async function authorizedQuestion(request:Request,id:string){
 export async function publicRateLimit(request:Request,kind:'question'|'message'){
   if(!sameOrigin(request))return questionJson({error:'Недопустимый источник запроса.'},403);
   const now=new Date();const secret=(env as unknown as Record<string,string>).KB_SESSION_SECRET||'local-preview';
-  const ipHash=await digest(secret+':'+(request.headers.get('x-nf-client-connection-ip')||'unknown'));
+  const ipHeader=env.KB_CLIENT_IP_HEADER||'x-nf-client-connection-ip';
+  const clientIp=request.headers.get(ipHeader)?.split(',').at(-1)?.trim()||'unknown';
+  const ipHash=await digest(secret+':'+clientIp);
   const bucket=kind+':'+now.toISOString().slice(0,13)+':'+ipHash;
   const db=getRawDb();const count=await db.prepare('INSERT INTO question_limits (bucket,count,updated_at) VALUES (?,1,?) ON CONFLICT(bucket) DO UPDATE SET count=question_limits.count+1 RETURNING count').bind(bucket,now.toISOString()).first<{count:number}>();
   await db.prepare('DELETE FROM question_limits WHERE updated_at<?').bind(new Date(now.getTime()-86400000).toISOString()).run();
