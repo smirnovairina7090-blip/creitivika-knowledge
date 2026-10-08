@@ -21,13 +21,13 @@ export type QuestionMessage = {id:string; text:string; createdAt:string; role:'�
 export type PersonalQuestion = Pick<RequestRecord,'id'|'title'|'category'|'group'|'details'|'tried'|'question'|'status'|'answer'|'assignee'|'dueDate'|'createdAt'|'updatedAt'|'version'|'author'|'answerBy'|'answerAt'|'messages'>;
 export type QuestionLink = {id:string; token:string; title:string; subscribed:boolean; seenAnswerAt:string};
 export const categories: {id:Category; name:string; color:string; short:string}[] = [
-  {id:'skills', name:'Компьютерные навыки', short:'Навыки', color:'#1764a4'},
-  {id:'pace', name:'Уровень и темп', short:'Уровень', color:'#6953b8'},
-  {id:'behavior', name:'Внимание и поведение', short:'Поведение', color:'#bd6330'},
-  {id:'parents', name:'Родители и обратная связь', short:'Родители', color:'#267766'},
-  {id:'lessons', name:'Урок и материалы', short:'Методика', color:'#a14373'},
-  {id:'organization', name:'Расписание и организация', short:'Организация', color:'#516379'},
-  {id:'tech', name:'Техника и подключение', short:'Техника', color:'#39757e'},
+  {id:'skills', name:'Компьютерные навыки', short:'Навыки', color:'#5c7418'},
+  {id:'pace', name:'Уровень и темп', short:'Уровень', color:'#8a6a22'},
+  {id:'behavior', name:'Внимание и поведение', short:'Поведение', color:'#96611b'},
+  {id:'parents', name:'Родители и обратная связь', short:'Родители', color:'#4d6514'},
+  {id:'lessons', name:'Урок и материалы', short:'Методика', color:'#78633e'},
+  {id:'organization', name:'Расписание и организация', short:'Организация', color:'#65616d'},
+  {id:'tech', name:'Техника и подключение', short:'Техника', color:'#647747'},
 ];
 export const roles = ['Преподаватель','Менеджер','Методист','Руководитель'];
 export const articleStatuses = ['Черновик','На проверке','Рекомендация','Согласовано','Архив'];
