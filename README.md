@@ -6,11 +6,11 @@ Next.js-приложение с карточками ситуаций, поис�
 
 ## Полная версия на Timeweb Cloud
 
-Настройки: [DEPLOY-TIMEWEB.md](DEPLOY-TIMEWEB.md). Поддерживаются Next.js с SSR и сборка через Dockerfile. Таблицы PostgreSQL автоматически создаются при npm run start, существующие данные сохраняются. DATABASE_URL и секреты задаются в панели хостинга и не добавляются в GitHub.
+Настройки: [DEPLOY-TIMEWEB.md](DEPLOY-TIMEWEB.md). В App Platform выберите Dockerfile и российский регион: файл сборки полного приложения уже включён в репозиторий. Таблицы PostgreSQL автоматически создаются при npm run start. Для переноса существующих вопросов из Neon сначала нужен экспорт и импорт базы. DATABASE_URL и секреты задаются в панели хостинга и не добавляются в GitHub.
 
 ## Версия на Vercel
 
-Адрес: https://creitivika-knowledge.vercel.app. PostgreSQL подключён через Neon. vercel.json задаёт сборку с предварительным применением миграций; повторный запуск не удаляет существующие данные. На Vercel не используется npm run start.
+Адрес: https://creitivika-knowledge.vercel.app. Пользователь сообщил о недоступности из России без VPN, поэтому этот адрес не удовлетворяет требованию доступности. Версия для переноса на российский хостинг подготовлена, но пока не опубликована там. PostgreSQL подключён через Neon. vercel.json задаёт сборку с предварительным применением миграций; повторный запуск не удаляет существующие данные. На Vercel не используется npm run start.
 
 В Production должны быть заданы DATABASE_URL, KB_EDITOR_CODE_HASH, KB_SESSION_SECRET, KB_PUBLIC_ORIGIN=https://creitivika-knowledge.vercel.app и KB_CLIENT_IP_HEADER=x-vercel-forwarded-for. Секреты хранятся только в панели проекта. Преподавателям не нужен аккаунт Vercel или Neon.
 
